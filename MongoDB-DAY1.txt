@@ -1,0 +1,117 @@
+*****DAY1*****
+1//ekranı temizleme
+
+cls
+
+2//shop isminde bir DB oluşturalım.
+
+use shop
+
+3//hangi db deyim
+
+db
+
+4//mevcut olan tüm DB leri görelim
+
+show dbs
+
+5//shop içinde customers isminde
+collection oluşturalım.
+
+db.createCollection("customers")
+
+6//tüm collectionları listeleyelim.
+
+db.getCollectionNames()
+
+7//customers collectionını silelim.
+
+db.customers.drop()
+
+8//shop databaseni silelim. 
+
+db.dropDatabase()
+
+9//yeni bir DB(products) ve içinde
+bir collection(electronics) oluşturalım.
+
+
+use products
+
+db.createCollection("electronics")
+
+
+10//collectiona document insert etme
+
+
+db.electronics.drop()
+
+
+db.electronics.insertOne({"name":"TV","price":230})
+
+
+NOT:collection oluşturmadan, document 
+   insertOne kullanarak doğrudan
+   eklenebilir.
+
+NOT:çift/tek tırnak kullanılabilir.
+
+
+11//birden fazla document ekleme
+
+ db.electronics.insertMany([{"name":"ipod","price":110},{"name":"iphone14"},{"name":"radio","price":53,"tax":10}])
+
+NOT:birden fazla document 
+   dizi([]) içinde eklenmeli
+
+
+12//bir veya birden fazla document
+ insert etme
+
+db.electronics.insert({name:"iron",price:75})
+
+db.electronics.insert([{"price":123},{"name":"radio","tax":8}])
+
+!!!insert fonk. deprecate olmuştur.
+
+
+13//tüm documentları listeleme
+
+db.electronics.find()
+
+//JSON formatının düzgün gözükmesi için
+db.electronics.find().pretty()
+
+14//ilk 2 documentı listele
+
+db.electronics.find().limit(2)
+
+
+15//sadece 3. documentı görelim.
+
+db.electronics.find().skip(2).limit(1)
+
+16//5. documendan itibaren ilk 2 documentı
+listeleyelim.
+
+db.electronics.find().skip(4).limit(2)
+
+17//name fieldı TV olan documentları listeleme
+
+db.electronics.find({"name":"TV"})
+
+***find({filter})
+
+18//name:TV olan ve price:250 olan documentı
+listeleyelim
+
+db.electronics.find({"name":"TV","price":250})
+
+veya AND ile
+
+db.electronics.find({$and:[{"name":"TV"},{"price":250}]})
+
+
+19//name:TV olan veya price:230
+olan documentları listeleme
+--ödev

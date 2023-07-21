@@ -1,0 +1,54 @@
+[{
+  "_id": {
+    "$oid": "646bbff12df0810f6e5e0624"
+  },
+  "name": "TV",
+  "price": 230
+},{
+  "_id": {
+    "$oid": "646bc2632df0810f6e5e0625"
+  },
+  "name": "ipod",
+  "price": 110
+},{
+  "_id": {
+    "$oid": "646bc2632df0810f6e5e0626"
+  },
+  "name": "iphone14"
+},{
+  "_id": {
+    "$oid": "646bc2632df0810f6e5e0627"
+  },
+  "name": "radio",
+  "price": 53,
+  "tax": 10
+},{
+  "_id": {
+    "$oid": "646bc6282df0810f6e5e0628"
+  },
+  "name": "iron",
+  "price": 75
+},{
+  "_id": {
+    "$oid": "646bc7492df0810f6e5e0629"
+  },
+  "price": 123
+},{
+  "_id": {
+    "$oid": "646bc85247c96f516941c7b8"
+  },
+  "name": "TV",
+  "price": 250
+},{
+  "_id": {
+    "$oid": "646bc98b47c96f516941c7ba"
+  },
+  "name": "radio",
+  "price": 150
+},{
+  "_id": {
+    "$oid": "646bcb242df0810f6e5e062a"
+  },
+  "name": "radio",
+  "tax": 8
+}]

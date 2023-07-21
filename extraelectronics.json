@@ -1,0 +1,14 @@
+[{
+	"name":"laptop",
+	"brand":"TOSHIBA"
+},
+{
+	"name":"laptop",
+	"brand":"LENOVA",
+	"price":500
+},
+{
+	"name":"laptop",
+	"price":700,
+	"tax":12
+}]

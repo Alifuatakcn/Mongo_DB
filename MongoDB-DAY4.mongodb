@@ -1,0 +1,212 @@
+//-----------DAY-4-------------
+9//b-accounting içindeki her bir döküman için toplam expense,
+// toplam earn ve net kazanç ise net_balance olarak gösterelim...
+
+use("okul");
+var pipeline=[
+    {$addFields:{total_expense:{$sum:"$expense"}, 
+                 total_earn:{$sum:"$earn"}}},
+    {$addFields:{net_balance:{$sum:["$total_expense","$total_earn"]} }}
+];
+db.accounting.aggregate(pipeline);
+
+9//c-yukarıdaki sorguyu net_balance a göre azalan sıralayalım.
+
+use("okul");
+var pipeline=[
+    {$addFields:{total_expense:{$sum:"$expense"}, 
+                 total_earn:{$sum:"$earn"}}},
+    {$addFields:{net_balance:{$sum:["$total_expense","$total_earn"]} }},
+    {$sort:{net_balance:-1}}
+];
+db.accounting.aggregate(pipeline);
+
+9//d-yukarıdaki sorguda bazı fieldları görmemek için
+//sadece total_earn,total_expense,net_balance,name görelim.
+
+use("okul");
+var pipeline=[
+    {$addFields:{total_expense:{$sum:"$expense"}, 
+                 total_earn:{$sum:"$earn"}}},
+    {$addFields:{net_balance:{$sum:["$total_expense","$total_earn"]} }},
+    {$sort:{net_balance:-1}},
+    {$project: {"_id":0,"earn":0,"expense":0 }}
+];
+db.accounting.aggregate(pipeline);
+
+//========================================
+//          bulkWrite([])
+//========================================
+
+use("okul")
+db.stories.insertMany(
+[{"author":"dave", "score":75, "views": 200},
+{"author":"chris", "score":90, "views": 100},
+{"author":"dave", "score":35, "views": 3000},
+{"author":"mary", "score":80, "views": 350},
+{"author":"dave", "score":54, "views": 333},
+{"author":"mary", "score":97, "views": 2000}]);
+
+// Task : Aşağıdaki birden fazla komudu tek methodla nasıl yapabiliriz
+//    * Insert {"author":"mark","score":55, "views":555} ,
+//    * yazarı Dave olan ilk dökümanın score bilgisini 55 olarak güncelleyin ,
+//    * Yazarı :"chris" olan ilk dökümanı {"author":"chris tien","score":55} ile değiştirin ,
+//    * Yazarı "mary" olan ilk dökümanı silin .
+
+use("okul");
+db.stories.bulkWrite([{insertOne:{"document":{"author":"mark","score":55, "views":555}}},
+                      {updateOne:{"filter":{"author":"dave"},"update":{$set:{"score":55}}}},
+                      {replaceOne:{"filter":{"author":"chris"},"replacement":{"author":"chris tien","score":55}}},
+                      {deleteOne:{"filter":{"author":"mary"}}}]);
+
+//bulkWrite defaultta fonk.ları sıralı çalıştırır.  
+
+//=========================================================
+//                  UNIONWITH ( Full Join )
+//=========================================================
+//
+// 2 farklı collectiondan datayı nasıl çekebiliriz ?
+// SQL de bunu joinler ile yapıyorduk
+//=========================================================  
+
+use("MEDYA")
+db.romanlar.insertMany(
+[{"yazar": "Mehmet Bak",  "fiyat" : 60, "yayinEvi" : "Yildiz",   "adet": 1000 },//60000
+{"yazar" : "Ali Gel",     "fiyat" : 75, "yayinEvi" : "MaviAy",   "adet": 1200 },
+{"yazar" : "Su Ak",       "fiyat" : 90, "yayinEvi" : "Caliskan", "adet": 2200},
+{"yazar" : "Meryem Can",  "fiyat" : 35, "yayinEvi" : "MorEv",    "adet": 560},
+{"yazar" : "Pelin Su",    "fiyat" : 80, "yayinEvi" : "Hedef",    "adet": 890 },
+{"yazar" : "Suat Ok",     "fiyat" : 54, "yayinEvi" : "Sinir",    "adet": 245}]);
+
+
+use("MEDYA")
+db.denemeler.insertMany(
+[{"yazar": "Mehmet Bak",  "fiyat" : 34, "yayinEvi" : "Yildiz", "adet": 400 },//13600
+{"yazar" : "Deniz Kos",   "fiyat" : 44, "yayinEvi" : "Yildiz", "adet": 350 },//15400
+{"yazar" : "Su Ak",       "fiyat" : 50, "yayinEvi" : "MorEv", "adet": 200},
+{"yazar" : "İsmet Kaç",   "fiyat" : 25, "yayinEvi" : "Hedef","adet": 800},
+{"yazar" : "Ali Gel",     "fiyat" : 40, "yayinEvi" : "Hedef", "adet": 1200 },
+{"yazar" : "Meryem Can",  "fiyat" : 22, "yayinEvi" : "MaviAy","adet": 300}]);
+
+//1 ) Her 2 collectiondan tüm dökümanları "adet" fieldına göre ters 
+// sıralıyarak listeyeliniz, id gözükmesin. 
+use("MEDYA")
+var pipeline=[
+    {$unionWith: {coll:"denemeler"}},//collectionları birleştir
+    {$sort:{"adet":-1}},//sıralama
+    {$project: {"_id":0}}//projection
+];
+db.romanlar.aggregate(pipeline);
+//ya da
+use("MEDYA")
+db.denemeler.aggregate([{$unionWith: {coll:"romanlar"}},//collectionları birleştir
+    {$sort:{"adet":-1}},//sıralama
+    {$project: {"_id":0}}//projection
+]);
+
+//collection sıralaması önemli DEĞİL çünkü tüm documentları getirir.
+
+//2 ) Her bir yayınevinin toplam kitap sayılarını ( 2 collection için) hesaplayan
+// ve toplam kitap sayısına göre sıralayan query yazınız.
+
+use("MEDYA")
+var pipeline=[
+    {$unionWith:{coll:"denemeler"}},//coll birleştirme
+    {$group:{"_id":"$yayinEvi", toplam_kitap:{$sum:"$adet"}}},//group,sum
+    {$sort:{"toplam_kitap":1}}//natural sıralama
+];
+db.romanlar.aggregate(pipeline);
+
+//3 ) Her bir yayınevinin kitap (deneme veya roman) satıslarından elde edeceği
+// toplam geliri hesaplayan ve azalan sırada gösteren query yazınız
+
+use("MEDYA")
+var pipeline=[
+    {$unionWith:{coll:"denemeler"}},//coll birleştirme
+    {$group:{"_id":"$yayinEvi", toplam_gelir:{$sum:{$multiply:["$adet","$fiyat"]}}}},//group, sum(adet X fiyat)
+    {$sort:{toplam_gelir:-1}}
+];
+db.romanlar.aggregate(pipeline);
+
+//==================================================================================
+//                       $LOOKUP (LEFT,( RIGHT, INNER) JOIN) 
+//    //1. collectionın hepsi, 2. collectiondan ortak olanlar görüntülenir. 
+//    {
+//      $lookup:
+//      {
+//        from: <Join uygulanacak İlişki kurulacak coll.>,
+//        localField: <giris dokumanindaki ilgili yani ilişki kuracak alanı>,
+//        foreignField: <Join yapilacak collectiondaki ilişki kurulacak alanı>,
+//        as: <İlişkilendirme sonucu eşleşen verilerin atanacağı yeni dizi alanı>
+//      },
+//      { $unwind:<field path> }//önceki stagedeki fieldı sonraki stage'e aktarır.
+//    }
+//==================================================================================
+
+use("MEDYA")
+db.romanlar.insertMany(
+[{"yazar": "Mehmet Bak",  "fiyat" : 60, "yayinEvi" : "Yildiz",   "adet": 1000 },//60000
+{"yazar" : "Ali Gel",     "fiyat" : 75, "yayinEvi" : "MaviAy",   "adet": 1200 },
+{"yazar" : "Su Ak",       "fiyat" : 90, "yayinEvi" : "Caliskan", "adet": 2200},
+{"yazar" : "Meryem Can",  "fiyat" : 35, "yayinEvi" : "MorEv",    "adet": 560},
+{"yazar" : "Pelin Su",    "fiyat" : 80, "yayinEvi" : "Hedef",    "adet": 890 },
+{"yazar" : "Suat Ok",     "fiyat" : 54, "yayinEvi" : "Sinir",    "adet": 245}]);
+
+use("MEDYA")
+db.siirler.insertMany(
+[{"muellif": "Mehmet Bak",   "fiyat" : 34, "yayinEvi" : "Yildiz", "adet": 400 },
+{"muellif" : "Ali Gel",      "fiyat" : 40, "yayinEvi" : "Hedef",  "adet": 1200 },
+{"muellif" : "Su Ak",        "fiyat" : 50, "yayinEvi" : "MorEv",  "adet": 200},
+{"muellif" : "Meryem Can",   "fiyat" : 22, "yayinEvi" : "MaviAy", "adet": 300},
+{"muellif" : "Deniz Kos",    "fiyat" : 44, "yayinEvi" : "Yildiz", "adet": 350 },
+{"muellif" : "İsmet Kaç",    "fiyat" : 25, "yayinEvi" : "Hedef",  "adet": 800}]);
+
+// QUERY1: romanlar collectionından tüm yazarlar ve
+// şiirler ile ortak olan yazarları listeyiniz.
+use("MEDYA");
+var pipeline=[
+    {$lookup: {
+      from: "siirler",
+      localField: "yazar",
+      foreignField: "muellif",
+      as:"ortak_muellif" //siirler collectionındaki ortak datayı getirip ortak_muellif isminde diziye koyar.
+    }}
+];
+db.romanlar.aggregate(pipeline);
+
+//lookup collection sırası ÖNEMLİ Mİ????
+// QUERY2: siirler collectionından tüm yazarlar ve
+// romanlar ile ortak olan yazarları listeyiniz.
+use("MEDYA");
+var pipeline=[
+    {$lookup: {
+      from: "romanlar",
+      localField: "muellif",
+      foreignField: "yazar",
+      as:"ortak_yazar" //romanlar collectionındaki ortak datayı getirip ortak_yazar isminde diziye koyar.
+    }}
+];
+db.siirler.aggregate(pipeline);
+
+// QUERY3: Her 2 collectionda (romanlar, şiirler) ortak olan yazarların toplam
+// kitap sayılarını ve  fiyat toplamını hesaplayan query yazınız
+
+use("MEDYA");
+var pipeline=[
+    {$lookup: {
+      from: "siirler",
+      localField: "yazar",
+      foreignField: "muellif",
+      as:"ortak_muellif" //siirler collectionındaki ortak datayı getirip ortak_muellif isminde diziye koyar.
+    }},
+    {$unwind:{path:"$ortak_muellif"}},//ortak_muellif içindeki documentları yeni bir collection gibi sonraki stage aktarır.
+    {$addFields:{toplam_kitap:{$sum:["$adet","$ortak_muellif.adet"]},
+                 toplam_fiyat:{$sum:["$fiyat","$ortak_muellif.fiyat"]}}},
+    {$project:{"_id":0, "toplam_kitap":1,"toplam_fiyat":1,"yazar":1}}             
+];
+db.romanlar.aggregate(pipeline);
+
+
+
+
+
